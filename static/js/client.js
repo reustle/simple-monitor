@@ -47,7 +47,7 @@ app.models.tmp_machines = [
 			processes : [6, 6]
 		}
 	},{
-		name : 'serve1',
+		name : 'serve1_temp',
 		stats : {
 			cpu : 0.17,
 			memory : 0.76,
@@ -83,7 +83,8 @@ app.models.tmp_machine = {
 };
 
 app.models.load_machines = function(callback){
-	callback(app.models.tmp_machines);
+	$.getJSON('/monitor/json/machines/', callback);
+//	callback(app.models.tmp_machines);
 };
 
 app.models.load_machine = function(machine_name, callback){
@@ -95,9 +96,9 @@ app.controllers = {};
 
 app.controllers.show_index = function(){
 	
-	app.models.load_machines(function(res){
+	app.models.load_machines(function(machines){
 		app.views.render_index({
-			machines : res
+			machines : machines
 		});
 	});
 	

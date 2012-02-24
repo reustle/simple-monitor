@@ -1,11 +1,25 @@
+/*
+mongo
+
+simple-monitor
+	machines
+		{name: p1, alerts: []},
+		
+	machine_stats
+		{machine: p1, type: cpu, value: 0.51, time: new Date()}
+		
+*/
+
 'use strict';
 
 var http = require('http');
+var async = require('async');
 var mongo = require('mongojs');
+var _ = require('underscore');
 
-var config_db = mongo.connect('127.0.0.1:27017/simple-monitor');
-var machines = config_db.collection('machines');
-var machine_stats = config_db.collection('machine_stats');
+var db_simple_monitor = mongo.connect('127.0.0.1:27017/simple-monitor');
+var db_machines = db_simple_monitor.collection('machines');
+var db_machine_stats = db_simple_monitor.collection('machine_stats');
 
 http.createServer(function(req, res){
 	
@@ -19,24 +33,38 @@ http.createServer(function(req, res){
 	
 	var friendly_url = req.url.split('/');
 	friendly_url.shift();
+	friendly_url.shift();
+	friendly_url.shift();
 	
 	if(friendly_url[0] == 'machines'){
 		// Load the list of machines
 		
 		res.writeHead(200, {'Content-Type' : 'application/javascript'});
 		var output = [];
-
-		output.push({
-			name : 'foo',
-			stats : {
-				cpu : 0.57,
-				memory : 0.43,
-				disk : 0.11,
-				processes : [10, 10]
-			}
+		
+		db_machines.find().sort({name:1}, function(err, machines){
+			if(err){ throw err}
+			
+			var get_current_stats = function(machine, callback){
+				db_machine_stats.find({machine:machine.name}).limit(1).sort({time:-1}, function(err, latest_stat){
+					if(err){throw err}
+					
+					if(latest_stat[0]){
+						output.push(latest_stat[0]);
+					}
+					
+					callback();
+				});
+			};
+			
+			async.forEach(machines, get_current_stats, function(err){
+				if(err){throw err}
+				
+				res.end(JSON.stringify(output));
+				
+			});
+			
 		});
-
-		res.end(JSON.stringify(output));
 		
 	}else if(friendly_url[0] == 'machine'){
 		// Load a specific machine
@@ -82,5 +110,5 @@ http.createServer(function(req, res){
 	
 }).listen(6543, '127.0.0.1');
 
-console.log('listening');
+console.log('[' + (new Date()) + '] Running. Waiting for requests.');
 

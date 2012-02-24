@@ -18,7 +18,7 @@ app.route = function(req){
 		//#/
 		app.controllers.show_index();
 		
-	}else if(req.length === 2 && req[0] === 'view'){
+	}else if(req.length == 2 && req[0] == 'view'){
 		//#/view/machine-name/
 		app.controllers.show_machine(req[1]);
 		
@@ -79,10 +79,7 @@ app.models.tmp_machine = {
 			['p_processing_pipeline_1d.py', false],
 			['p_processing_pipeline_vertical.py', true]
 		]
-	},
-	alerts : [
-		{}
-	]
+	}
 };
 
 app.models.load_machines = function(callback){

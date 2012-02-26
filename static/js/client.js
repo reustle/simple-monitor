@@ -14,6 +14,9 @@ app.init = function(){
 
 app.route = function(req){
 	
+	// Kill any refresh timer
+	clearTimeout(app.refresh_timer);
+	
 	if(req.length == 0){
 		//#/
 		app.controllers.show_index();
@@ -26,39 +29,44 @@ app.route = function(req){
 	
 };
 
+app.consts = {
+	warning_threshold : 0.75
+};
+
 /* #################### */
 app.models = {};
 
 app.models.tmp_machines = [
 	{
-		name : 'process1',
+		machine : 'process1',
 		stats : {
-			cpu : 0.57,
-			memory : 0.43,
-			disk : 0.11,
+			cpu : Math.random(0, 1),
+			memory : Math.random(0, 1),
+			disk : Math.random(0, 1),
 			processes : [10, 10]
 		}
 	},{
-		name : 'process2',
+		machine : 'process2',
 		stats : {
-			cpu : 0.91,
-			memory : 0.34,
-			disk : 0.50,
+			cpu : Math.random(0, 1),
+			memory : Math.random(0, 1),
+			disk : Math.random(0, 1),
 			processes : [6, 6]
 		}
 	},{
-		name : 'serve1_temp',
+		machine : 'serve1_temp',
 		stats : {
-			cpu : 0.17,
-			memory : 0.76,
-			disk : 0.04,
+			cpu : Math.random(0, 1),
+			memory : Math.random(0, 1),
+			disk : Math.random(0, 1),
+			
 			processes : [14, 15]
 		}
 	}
 ];
 
 app.models.tmp_machine = {
-	name : 'process2',
+	machine : 'process2',
 	stats : {
 		cpu : [
 			0.79, 0.77, 0.48, 0.44,
@@ -83,10 +91,12 @@ app.models.tmp_machine = {
 };
 
 app.models.load_machines = function(callback){
+	//callback(_.clone(app.models.tmp_machines));
 	$.getJSON('/monitor/json/machines/', callback);
 };
 
 app.models.load_machine = function(machine_name, callback){
+	//callback(_.clone(app.models.tmp_machine));
 	$.getJSON('/monitor/json/machine/' + machine_name + '/', callback);
 };
 
@@ -96,10 +106,28 @@ app.controllers = {};
 app.controllers.show_index = function(){
 	
 	app.models.load_machines(function(machines){
+		
+		// Add warn flags if a value is above the threshold 
+		for(var i = 0, l = machines.length; i < l; i++){
+			if(machines[i].stats.cpu > app.consts.warning_threshold){
+				machines[i].stats.warn_cpu = true;
+			}
+			
+			if(machines[i].stats.memory > app.consts.warning_threshold){
+				machines[i].stats.warn_memory = true;
+			}
+			
+			if(machines[i].stats.disk > app.consts.warning_threshold){
+				machines[i].stats.warn_disk = true;
+			}
+		}
+		
 		app.views.render_index({
 			machines : machines
 		});
 	});
+	
+	app.refresh_timer = setTimeout(app.controllers.show_index, 15*1000);
 	
 };
 
@@ -109,17 +137,15 @@ app.controllers.show_machine = function(machine_name){
 		app.views.render_machine(machine_stats);
 	});
 	
-	// Also start a socket.io connection to update the graphss
-	
 };
 
 /* #################### */
 app.views = {};
-		
+
 app.views.render_index = function(data){
 	var tmpl = "\
 		<h1>All Machines</h1>\
-		<table>\
+		<table class='index'>\
 			<tr>\
 				<th>Machine</th>\
 				<th>CPU</th>\
@@ -128,12 +154,12 @@ app.views.render_index = function(data){
 				<th>Processes</th>\
 			</tr>\
 			{{#machines}}\
-				<tr>\
+				<tr onclick='window.location = \"#/view/{{machine}}/\"'>\
 					<td><a href='#/view/{{machine}}/'>{{machine}}</td>\
 					{{#stats}}\
-						<td>{{cpu}} %</td>\
-						<td>{{memory}} %</td>\
-						<td>{{disk}} %</td>\
+						<td><div class='progress_bar'><div {{#warn_cpu}}class='warn'{{/warn_cpu}} style='width: {{cpu}}px'></div></div></td>\
+						<td><div class='progress_bar'><div {{#warn_memory}}class='warn'{{/warn_memory}} style='width: {{memory}}px'></div></div></td>\
+						<td><div class='progress_bar'><div {{#warn_disk}}class='warn'{{/warn_disk}} style='width: {{disk}}px'></div></div></td>\
 						<td>{{processes}}</td>\
 					{{/stats}}\
 				</tr>\
@@ -156,7 +182,7 @@ app.views.render_index = function(data){
 app.views.render_machine = function(data){
 	var tmpl = "\
 		<h1>{{machine}}</h1>\
-		<a href='#'>Back</a>\
+		<a href='#/'>Back</a>\
 		<h2>CPU Usage</h2>\
 		<div id='graph_cpu' class='graph'></div>\
 		<h2>Memory Usage</h2>\
@@ -191,26 +217,23 @@ app.views.render_machine = function(data){
 	};
 	
 	var line_options = {
-		color : 'rgb(200, 20, 30)',
+		color : '#c00',
 		threshold : {
-			below : 0.75,
-			color : 'rgb(30, 180, 20)',
+			below : app.consts.warning_threshold,
+			color : '#2d2',
 		}
 	};
 	
 	// CPU Graph
 	var cpu_points = utils.plotable_list(data.stats.cpu);
-	$('#graph_cpu').css({ height : '200px' , width : '500px' });
 	$.plot($('#graph_cpu'), [ _.extend(line_options, {data : cpu_points}) ], graph_options);
 	
 	// Memory Graph
 	var memory_points = utils.plotable_list(data.stats.memory);
-	$('#graph_memory').css({ height : '200px' , width : '500px' });
 	$.plot($('#graph_memory'), [ _.extend(line_options, {data : memory_points}) ], graph_options);
 	
 	// Disk Graph
 	var disk_points = utils.plotable_list(data.stats.disk);
-	$('#graph_disk').css({ height : '200px' , width : '500px' });
 	$.plot($('#graph_disk'), [ _.extend(line_options, {data : disk_points}) ], graph_options);
 	
 	// Process List

@@ -1,0 +1,56 @@
+body {
+	background: #c0c0c0;
+	font-family: helvetica, arial, sans-serif;
+	margin: 0px;
+	padding: 0px;
+}
+
+#wrapper {
+	background: #fff;
+	width: 960px;
+	margin: 20px auto;
+	box-shadow: 0px 0px 15px #888;
+	border-radius: 6px;
+}
+	
+	table {
+		width: 100%;
+	}
+	
+	h1 {
+		margin: 0px 0px 5px 0px;
+		padding: 0px;
+	}
+	
+	#body {
+		padding: 20px;
+	}
+		
+		.graph {
+			height: 200px;
+			width: 400px;
+		}
+		
+		.index td {
+			padding: 3px 0px;
+		}
+		
+		.progress_bar {
+			width: 102px;
+			margin: 0px auto;
+			height: 20px;
+			background: #ddd;
+			border: 1px solid #888;
+			border-radius: 4px;
+		}
+			.progress_bar div {
+				margin: 1px;
+				border-radius: 4px;
+				background: rgb(30, 180, 20);
+				background: #2d2;
+				height: 18px;
+			}
+				.progress_bar div.warn {
+					background: #c00;
+				}
+

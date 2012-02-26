@@ -18,7 +18,12 @@ utils.get_friendly_url_hash = function(){
 	if(raw_hash.length != 0){ 
 		var re_match = raw_hash.match(hash_re);
 		if(re_match != null && re_match.length > 1){ 
-			return re_match[1].split('/');
+			var result = re_match[1].split('/');
+			if(result[0].length == ''){
+				return [];
+			}else{
+				return result;
+			}
 		}   
 	}   
 	return []; 

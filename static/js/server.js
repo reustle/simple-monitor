@@ -87,7 +87,7 @@ http.createServer(function(req, res){
 			
 		});
 		
-		var output = {
+		var output2 = {
 			name : friendly_url[1],
 			stats : {
 				cpu : [

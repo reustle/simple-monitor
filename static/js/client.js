@@ -84,11 +84,10 @@ app.models.tmp_machine = {
 
 app.models.load_machines = function(callback){
 	$.getJSON('/monitor/json/machines/', callback);
-//	callback(app.models.tmp_machines);
 };
 
 app.models.load_machine = function(machine_name, callback){
-	callback(app.models.tmp_machine);
+	$.getJSON('/monitor/json/machine/' + machine_name + '/', callback);
 };
 
 /* #################### */
@@ -106,8 +105,8 @@ app.controllers.show_index = function(){
 
 app.controllers.show_machine = function(machine_name){
 	
-	app.models.load_machine(machine_name, function(res){
-		app.views.render_machine(res);
+	app.models.load_machine(machine_name, function(machine_stats){
+		app.views.render_machine(machine_stats);
 	});
 	
 	// Also start a socket.io connection to update the graphss
@@ -130,7 +129,7 @@ app.views.render_index = function(data){
 			</tr>\
 			{{#machines}}\
 				<tr>\
-					<td><a href='#/view/{{name}}/'>{{name}}</td>\
+					<td><a href='#/view/{{machine}}/'>{{machine}}</td>\
 					{{#stats}}\
 						<td>{{cpu}} %</td>\
 						<td>{{memory}} %</td>\
@@ -156,7 +155,8 @@ app.views.render_index = function(data){
 
 app.views.render_machine = function(data){
 	var tmpl = "\
-		<h1>{{name}}</h1>\
+		<h1>{{machine}}</h1>\
+		<a href='#'>Back</a>\
 		<h2>CPU Usage</h2>\
 		<div id='graph_cpu' class='graph'></div>\
 		<h2>Memory Usage</h2>\

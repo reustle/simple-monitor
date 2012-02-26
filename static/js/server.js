@@ -1,15 +1,3 @@
-/*
-mongo
-
-simple-monitor
-	machines
-		{name: p1, alerts: []},
-		
-	machine_stats
-		{machine: p1, type: cpu, value: 0.51, time: new Date()}
-		
-*/
-
 'use strict';
 
 var http = require('http');
@@ -33,8 +21,6 @@ http.createServer(function(req, res){
 	
 	var friendly_url = req.url.split('/');
 	friendly_url.shift();
-	friendly_url.shift();
-	friendly_url.shift();
 	
 	if(friendly_url[0] == 'machines'){
 		// Load the list of machines
@@ -43,11 +29,11 @@ http.createServer(function(req, res){
 		var output = [];
 		
 		db_machines.find().sort({name:1}, function(err, machines){
-			if(err){ throw err}
+			if(err){ throw err }
 			
 			var get_current_stats = function(machine, callback){
 				db_machine_stats.find({machine:machine.name}).limit(1).sort({time:-1}, function(err, latest_stat){
-					if(err){throw err}
+					if(err){ throw err }
 					
 					if(latest_stat[0]){
 						output.push(latest_stat[0]);
@@ -58,8 +44,9 @@ http.createServer(function(req, res){
 			};
 			
 			async.forEach(machines, get_current_stats, function(err){
-				if(err){throw err}
+				if(err){ throw err }
 				
+				// Sort output by machine name
 				res.end(JSON.stringify(output));
 				
 			});
@@ -75,6 +62,30 @@ http.createServer(function(req, res){
 		}
 		
 		res.writeHead(200, {'Content-Type' : 'application/javascript'});
+		
+		db_machine_stats.find({machine:friendly_url[1]}).limit(20).sort({time:-1}, function(err, latest_stats){
+			if(err){ throw err }
+			
+			var all_stats = {
+				cpu : [],
+				memory : [],
+				disk : [],
+				processes : [0,0]
+			};
+			
+			for(var i = 0, l = latest_stats.length; i < l; i++){
+				all_stats.cpu.push(latest_stats[i].stats.cpu);
+				all_stats.memory.push(latest_stats[i].stats.memory);
+				all_stats.disk.push(latest_stats[i].stats.disk);
+				all_stats.processes = latest_stats[i].stats.processes;
+			}
+			
+			res.end(JSON.stringify({
+				machine : friendly_url[1],
+				stats : all_stats
+			}));
+			
+		});
 		
 		var output = {
 			name : friendly_url[1],
@@ -101,7 +112,6 @@ http.createServer(function(req, res){
 			}
 		};
 
-		res.end(JSON.stringify(output));
 		
 	}else{
 		res.writeHead(404, {'Content-Type' : 'text/html'});

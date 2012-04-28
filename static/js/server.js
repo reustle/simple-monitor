@@ -5,7 +5,7 @@ var async = require('async');
 var mongo = require('mongojs');
 var _ = require('underscore');
 
-var db_simple_monitor = mongo.connect('127.0.0.1:27017/simple-monitor');
+var db_simple_monitor = mongo.connect('127.0.0.1:27017/simple_monitor');
 var db_machines = db_simple_monitor.collection('machines');
 var db_machine_stats = db_simple_monitor.collection('machine_stats');
 

@@ -1,3 +1,5 @@
+'use strict';
+
 var spawn_process = require('child_process').spawn;
 var mongo = require('mongojs');
 var async = require('async');
@@ -24,8 +26,12 @@ app.init = function(){
 		host : '127.0.0.1',
 		port : 27017,
 		db_name : 'simple_monitor',
-		col_name : 'machine_stats'
+		stats_col_name : 'machine_stats',
+		machines_col_name : 'machines'
 	});
+	
+	// Verify this machine is known by the monitor
+	app.models.verify_known_machine(function(){});
 	
 	// Run every 5 seconds, forever
 	setInterval(function(){
@@ -41,14 +47,15 @@ app.models.db_connect = function(db_config){
 	
 	var mongo_connection_string = db_config.host + ':' + db_config.port + '/' + db_config.db_name;
 	app.models.db_database_connection = mongo.connect(mongo_connection_string);
-	app.models.db_stats_collection = app.models.db_database_connection.collection(db_config.col_name);
+	app.models.db_stats_collection = app.models.db_database_connection.collection(db_config.stats_col_name);
+	app.models.db_machines_collection = app.models.db_database_connection.collection(db_config.machines_col_name);
 	
 };
 
 app.models.set_machine_name = function(new_machine_name){
 	// Set the machine name
 	
-	app.models.machine_name = new_machine_name;
+	app.models.machine_name = new_machine_name.toLowerCase();
 };
 
 app.models.get_cpu_util = function(callback){
@@ -129,6 +136,21 @@ app.models.send_status = function(stats_data, callback){
 	app.models.db_stats_collection.insert(insert_row, function(){
 		callback();
 	});
+};
+
+app.models.verify_known_machine = function(callback){
+	var insert_row = {
+		name : app.models.machine_name
+	};
+	
+	var machines_check = app.models.db_machines_collection.find({name: app.models.machine_name}, function(err, response){
+		if(!response.length){
+			app.models.db_machines_collection.insert(insert_row, function(){
+				callback();
+			});
+		}
+	});
+	
 };
 
 // CONTROLLERS

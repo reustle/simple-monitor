@@ -15,3 +15,7 @@ Install (from scratch)
 > sudo npm install mongojs
 > 
 > sudo npm install async
+
+## To Do
+* Take db IP as command line param
+* Don't log every insert, logs will fill up too fast

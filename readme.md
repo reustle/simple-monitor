@@ -19,3 +19,4 @@ Install (from scratch)
 ## To Do
 * Take db IP as command line param
 * Don't log every insert, logs will fill up too fast
+* Rename load_avg in node to cpu_load

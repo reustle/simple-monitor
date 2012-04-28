@@ -10,7 +10,7 @@ Install (from scratch)
 > 
 > sudo apt-get update
 > 
-> sudo apt-get install nodejs npm
+> sudo apt-get install nodejs npm -y
 > 
 > sudo npm install mongojs
 > 

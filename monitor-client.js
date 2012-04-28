@@ -145,6 +145,7 @@ app.models.verify_known_machine = function(callback){
 	
 	var machines_check = app.models.db_machines_collection.find({name: app.models.machine_name}, function(err, response){
 		if(!response.length){
+			console.log('Added self to machines list');
 			app.models.db_machines_collection.insert(insert_row, function(){
 				callback();
 			});
